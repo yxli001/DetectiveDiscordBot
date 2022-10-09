@@ -107,8 +107,7 @@ client.on("messageCreate", async (message) => {
                     .setThumbnail(message.author.avatarURL())
                     .setDescription(
                         "A user has been banned! For the safety of our server, please refrain from sending content that may be deemed explicit. Thanks!"
-                    )
-                    .setURL("https://apple.com");
+                    );
 
                 message.guild.members.ban(message.author.id);
                 await message.channel.send({ embeds: [bannedEmbed] });
