@@ -61,9 +61,12 @@ client.on("messageCreate", async (message) => {
     try {
         if (message?.author.bot) return;
 
-        const response = await axios.post("http:localhost:8000/api/detector/", {
-            text: message.content,
-        });
+        const response = await axios.post(
+            "https://detective-discord-1.herokuapp.com/api/detector",
+            {
+                text: message.content,
+            }
+        );
         const data = response.data;
         const { hateSpeech, labels } = data;
 
