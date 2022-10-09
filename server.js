@@ -44,13 +44,24 @@ client.on("guildMemberAdd", async (member) => {
     if (foundUser.hasBeenBanned) {
         const guildOwner = await member.guild.fetchOwner();
 
+        let pastOffensesString = "hate speech relating to ";
+        foundUser.pastOffenses.forEach((offense, index) => {
+            if (index === foundUser.pastOffenses.length - 1) {
+                pastOffensesString += offense.toLowerCase() + " ";
+
+                return;
+            }
+
+            pastOffensesString += offense.toLowerCase() + ", ";
+        });
+
         const badPersonJoinedEmbed = new EmbedBuilder()
             .setColor("ff4b2b")
             .setTitle(
                 `${member.user.username}#${member.user.discriminator} joined ${member.guild.name}`
             )
             .setDescription(
-                `${member.user.username}#${member.user.discriminator} has been banned for hate speech in other servers before, please be cautious.`
+                `${member.user.username}#${member.user.discriminator} has been banned for ${pastOffensesString} in other servers before, please be cautious.`
             )
             .setThumbnail(member.user.avatarURL());
         await guildOwner.send({ embeds: [badPersonJoinedEmbed] });
