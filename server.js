@@ -1,7 +1,7 @@
 require("dotenv").config();
 const axios = require("axios");
 const mongoose = require("mongoose");
-const { Client, GatewayIntentBits } = require("discord.js");
+const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -30,6 +30,10 @@ mongoose
 // import models
 const User = require("./models/User");
 
+client.on("ready", async () => {
+    client.user.setActivity("I am watching you 0_0");
+});
+
 client.on("guildMemberAdd", async (member) => {
     const foundUser = await User.findOne({
         discordUserId: member.id,
@@ -39,9 +43,17 @@ client.on("guildMemberAdd", async (member) => {
 
     if (foundUser.hasBeenBanned) {
         const guildOwner = await member.guild.fetchOwner();
-        guildOwner.send(
-            `${member.user.username}#${member.user.discriminator} has joined your server (${member.guild.name}), and they have been banned for hate speech in other servers before, please be cautious.`
-        );
+
+        const badPersonJoinedEmbed = new EmbedBuilder()
+            .setColor("ff4b2b")
+            .setTitle(
+                `${member.user.username}#${member.user.discriminator} joined ${member.guild.name}`
+            )
+            .setDescription(
+                `${member.user.username}#${member.user.discriminator} has been banned for hate speech in other servers before, please be cautious.`
+            )
+            .setThumbnail(member.user.avatarURL());
+        await guildOwner.send({ embeds: [badPersonJoinedEmbed] });
     }
 });
 
@@ -84,18 +96,36 @@ client.on("messageCreate", async (message) => {
             }
 
             if (foundUser.strikes[strikeIndex].numberOfStrikes >= 3) {
+                const bannedEmbed = new EmbedBuilder()
+                    .setColor("ff4b2b")
+                    .setTitle(
+                        `${message.author.username}#${message.author.discriminator} has been banned`
+                    )
+                    .setThumbnail(message.author.avatarURL())
+                    .setDescription(
+                        "A user has been banned! For the safety of our server, please refrain from sending content that may be deemed explicit. Thanks!"
+                    )
+                    .setURL("https://apple.com");
+
                 message.guild.members.ban(message.author.id);
-                message.channel.send(
-                    `Banned ${message.author.toString()} for hate speech`
-                );
+                await message.channel.send({ embeds: [bannedEmbed] });
 
                 foundUser.hasBeenBanned = true;
+                foundUser.strikes[strikeIndex].numberOfStrikes = 0;
             } else {
-                message.channel.send(
-                    `Warning ${message.author.toString()} for hate speech. You have ${
-                        3 - foundUser.strikes[strikeIndex].numberOfStrikes
-                    } strikes remaining until you go bye bye`
-                );
+                const warningEmbed = new EmbedBuilder()
+                    .setColor("ffc919")
+                    .setTitle(
+                        `Warning ${message.author.username}#${message.author.discriminator} for hate speech.`
+                    )
+                    .setThumbnail(message.author.avatarURL())
+                    .setDescription(
+                        `${message.author.toString()} has been warned! You have ${
+                            3 - foundUser.strikes[strikeIndex].numberOfStrikes
+                        } strikes remaining until you go bye byeFor the safety of our server, please refrain from sending content that may be deemed explicit. Thanks!`
+                    );
+
+                await message.channel.send({ embeds: [warningEmbed] });
             }
 
             await foundUser.save();
@@ -113,9 +143,17 @@ client.on("messageCreate", async (message) => {
                 pastOffenses: labels,
             });
 
-            message.channel.send(
-                `Warning ${message.author.toString()} for hate speech. You have 2 strikes remaining til ya gone kid`
-            );
+            const warningEmbed = new EmbedBuilder()
+                .setColor("ffc919")
+                .setTitle(
+                    `Warning ${message.author.username}#${message.author.discriminator} for hate speech. `
+                )
+                .setThumbnail(message.author.avatarURL())
+                .setDescription(
+                    "You have 2 strikes remaining until you explode. Kaboom! For the safety of our server, please refrain from sending content that may be deemed explicit. Thanks!"
+                );
+
+            await message.channel.send({ embeds: [warningEmbed] });
 
             await newUser.save();
         }
